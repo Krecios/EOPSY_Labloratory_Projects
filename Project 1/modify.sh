@@ -88,7 +88,7 @@ if [ $RECURSION = 0 ]; then
 			cd						#if not, change to base directory
 		fi
 		cd ${i%/*}						#change dir to dir of given file; ${i%/*} cuts the given file name, but leaves 										the dir 
-		if [[ -f ${i##*/} ]]; then				#check if the given file is indeed a file; ${i##*/} cuts everything but the 										filename
+		if [[ -e ${i##*/} ]]; then				#check if the given file exists; ${i##*/} cuts everything but the 										filename
 			if [ $MODE = "l" ]; then
 				rename 'y/A-Z/a-z/' ${i##*/}		#changes the letters to lowercase
 			elif [ $MODE = "u" ]; then
@@ -109,20 +109,41 @@ if [ $RECURSION = 1 ]; then
 	if [[ $i != ./* ]]; then
 		cd
 	fi 
-		for f in `find "$i" -name "*"`; do			#creates the list of all of the subdirectories of a given file
+		for f in `find "$i" -name "*"`; do			#creates the list of all of the subdirectories of a given file, and goes one by 									one
 		if [[ $i = ./* ]]; then
 			cd "$ScriptPath"
 		else
 			cd
 		fi
-		cd ${f%/*}
-		if [ -f ${f##*/} ]; then
+		cd ${f%/*}						#change dir to dir of given file; ${f%/*} cuts the given file name, but leaves 										the dir 
+		if [ -f ${f##*/} ]; then				#check if the given file is indeed a file; ${f##*/} cuts everything but the 										filename
 			if [ $MODE = "l" ]; then
-				rename 'y/A-Z/a-z/' ${f##*/}
+				rename 'y/A-Z/a-z/' ${f##*/}		#changes the letters to lowercase
 			elif [ $MODE = "u" ]; then
-				rename 'y/a-z/A-Z/' ${f##*/}
+				rename 'y/a-z/A-Z/' ${f##*/}		#changes the letters to uppercase
 			elif [ $MODE = "s" ]; then
-				rename "$SED" ${f##*/}
+				rename "$SED" ${f##*/}			#changes the name according to the sed expression			
+			fi
+		fi
+		done
+		echo "Done"
+		if [[ $i != ./* ]]; then
+		cd
+		fi 
+		for f in `find "$i" -name "*" | tac`; do		#creates the list of all of the subdirectories of a given file, and 										goes one by one, "| tac" reverses the list
+		if [[ $i = ./* ]]; then
+			cd "$ScriptPath"
+		else
+			cd
+		fi
+		cd ${f%/*}						#check if the given file is indeed a file; ${f##*/} cuts everything but the 										filename
+		if [ -d ${f##*/} ]; then				#check if the given file is a directory; ${f##*/} cuts everything but the 										filename
+			if [ $MODE = "l" ]; then
+				rename 'y/A-Z/a-z/' ${f##*/}		#changes the letters to lowercase
+			elif [ $MODE = "u" ]; then
+				rename 'y/a-z/A-Z/' ${f##*/}		#changes the letters to uppercase
+			elif [ $MODE = "s" ]; then
+				rename "$SED" ${f##*/}			#changes the name according to the sed expression
 			fi
 		fi
 		done
