@@ -53,7 +53,7 @@ fi
 # do with command line arguments
 f=n
 s=n
-while test "x$1" != "x"
+while test "x$1" != "x"							#checking the first argument, and the second argument if recursion is selected
 do
         case "$1" in
 		-h) Help;;
@@ -65,42 +65,39 @@ do
 shift
 done
 
-if [ -n "$1" -a -z "$MODE" ]; then
-	SED=$1
+if [ -n "$1" -a -z "$MODE" ]; then					#setting the SED expression and setting the mode to s (SED), if the mode is not 
+	SED=$1								#already selected
 	MODE="s"
 	shift
 fi
 
-if [[ $1 != ./* ]]; then
-	cd
+if [[ $1 != ./* ]]; then						#if the given imput directory is not in ./* format, change the directory to
+	cd								#home directory to avoid the confilct with directories
 fi
 
-while [ -e "$1" ]; do
+while [ -e "$1" ]; do							#check if given file exists
 
 cd "$ScriptPath"
-
-echo "$1"
-ls
 	
 if [ $RECURSION = 0 ]; then
 	for i in "$1"
 	do
-		if [[ $i = ./* ]]; then
-			cd "$ScriptPath"
+		if [[ $i = ./* ]]; then					#changing directories to avoid confilct
+			cd "$ScriptPath"				#if the dir is in the ./*, change dir to the script dir
 		else
-			cd
+			cd						#if not, change to base directory
 		fi
-		cd ${i%/*}
-		if [[ -f ${i##*/} ]]; then
+		cd ${i%/*}						#change dir to dir of given file; ${i%/*} cuts the given file name, but leaves 										the dir 
+		if [[ -f ${i##*/} ]]; then				#check if the given file is indeed a file; ${i##*/} cuts everything but the 										filename
 			if [ $MODE = "l" ]; then
-				rename 'y/A-Z/a-z/' ${i##*/}
+				rename 'y/A-Z/a-z/' ${i##*/}		#changes the letters to lowercase
 			elif [ $MODE = "u" ]; then
-				rename 'y/a-z/A-Z/' ${i##*/}
+				rename 'y/a-z/A-Z/' ${i##*/}		#changes the letters to uppercase
 			elif [ $MODE = "s" ]; then
-				rename "$SED" ${i##*/}
+				rename "$SED" ${i##*/}			#changes the name according to the sed expression
 		fi
 		else
-			echo "NOT A FILE"
+			echo "NOT A FILE"				#if given file is not a file, print an error
 			exit 0
 		fi
 	done
@@ -112,7 +109,7 @@ if [ $RECURSION = 1 ]; then
 	if [[ $i != ./* ]]; then
 		cd
 	fi 
-		for f in `find "$i" -name "*"`; do
+		for f in `find "$i" -name "*"`; do			#creates the list of all of the subdirectories of a given file
 		if [[ $i = ./* ]]; then
 			cd "$ScriptPath"
 		else
@@ -131,12 +128,10 @@ if [ $RECURSION = 1 ]; then
 		done
 	done
 fi
-ls
 cd "$ScriptPath"
 shift
-if [[ $1 != ./* ]]; then
-cd
+if [[ $1 != ./* ]]; then						#if the next file is not in format ./*, change the dir to the home dir, to avoid
+cd									#conflict
 fi
-pwd
 done
 exit 1

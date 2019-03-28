@@ -1,8 +1,5 @@
-#!/bin/sh
-
-text()
-{
-    echo "The goal of the modify.sh is to change the names of the files, according to the given sed expression/regex.
+#!/bin/bash
+echo "The goal of the modify.sh is to change the names of the files, according to the given sed expression/regex.
     The simplest use of this method are presented as:
 
     modify -u ./file    - This simple commend will turn all of the lowercase characters in the file names 'file' to uppercase characters
@@ -22,20 +19,3 @@ text()
     modify ./file        - Will not execute because of lack of the mode argument
     modify -u            - Will not execute beausee of lack of file directory
     modify -u -r ./Dir   - Will not execute because of wrong order of the first two arguments"
-}
-
-if test -z "$1"
-then
-text()
-fi
-
-while test "x$1" != "x"
-do
-        case "$1" in
-                *) text()
-        esac
-        shift
-done
-exit 1
-
-
