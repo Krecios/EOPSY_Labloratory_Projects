@@ -22,7 +22,6 @@ int main()
 	break;
         case -1: //checking if signal was not properly created
         {
-            printf("ERROR\n");
 	    kill(0, SIGTERM);
             exit(1);
         }
@@ -33,11 +32,11 @@ int main()
     while(1)
         {
             int WaitToDie = wait(0);  //waiting for a child to die and transfering the pid of last dead child to the int WaitToDie
-            if(WaitToDie == -1)          //if error occurs, or there is no more children
+            if(WaitToDie == -1)   //if error occurs, or there is no more children
             {
                 break;
             }
-            else
+            else //when the child is tenminated
             {
                 printf("Child: [%i] has died\n",WaitToDie);
                 counter++;
