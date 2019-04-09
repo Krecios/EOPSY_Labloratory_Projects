@@ -15,7 +15,7 @@ void KeyboardStop()     //custom interupt function that prints the interupt mess
 }
 void Termination()  //custom sigterm signal
 {
-    printf("Parent: [%i] has beent terminated using Termination()\n", getpid());
+    printf("Child: [%i] has beent terminated using Termination()\n", getpid());
 }
 #endif
 
@@ -27,35 +27,35 @@ int main()
     struct sigaction sig;   //settin up the sigaction object that will be used in the signal processing
 
     #ifdef SIGNALOPT
-    sig.sa_handler = SIG_IGN;   //ignoring all the signals in a for loop (NSIG is a integer number of created signals)
-    for(int i = 0; i<NSIG; i++) sigaction(i, &sig, 0);
+        sig.sa_handler = SIG_IGN;   //ignoring all the signals in a for loop (NSIG is a integer number of created signals)
+        for(int i = 0; i<NSIG; i++) sigaction(i, &sig, 0);
 
-    sig.sa_handler = SIG_DFL;   //restoring the default handler for ingnored signals (SIG_DFL is a signal default mode, it's used to bring the ignored signals to the deafult mode)
-    sigaction(SIGCHLD, &sig, 0);
+        sig.sa_handler = SIG_DFL;   //restoring the default handler for ingnored signals (SIG_DFL is a signal default mode, it's used to bring the ignored signals to the deafult mode)
+        sigaction(SIGCHLD, &sig, 0);
 
-    sig.sa_handler = KeyboardStop; //setting up the custom keyboard interupt that will react when Cntrl+C i pressed on the keyboard
-    sigaction(SIGINT, &sig, 0);
+        sig.sa_handler = KeyboardStop; //setting up the custom keyboard interupt that will react when Cntrl+C i pressed on the keyboard
+        sigaction(SIGINT, &sig, 0);
     #endif
 
     for(int i=0; i<NUM_CHILD; ++i) //setting up loop for given number of processes
     {
     #ifdef SIGNALOPT
-    if(InteruptFlag == 1)   //if the keyboard interupt was detected, the porgram displays an error message and terminates the created processes
-    {
-        printf("Interuption of parent: [%i] has been detected\n",getpid());
-        kill(0, SIGTERM);
-        break;
-    }
-    #endif
+        if(InteruptFlag == 1)   //if the keyboard interupt was detected, the porgram displays an error message and terminates the created processes
+        {
+            printf("Interuption of parent: [%i] has been detected\n",getpid());
+            kill(0, SIGTERM);
+            break;
+        }
+    #endif 
 	switch(fork())
 {
         case 0:  //checking if the signal was properly created
         {
             #ifdef SIGNALOPT
-            sig.sa_handler = SIG_DFL;   //restoring the SIGINT signal back to the default one
-            sigaction(SIGINT, &sig, 0);
-            sig.sa_handler = Termination;   //setting a custom SIGTERM signal
-            sigaction(SIGTERM, &sig, 0);
+                sig.sa_handler = SIG_IGN;   //ignoring the SIGINT signal
+                sigaction(SIGINT, &sig, 0);
+                sig.sa_handler = Termination;   //setting a custom SIGTERM signal
+                sigaction(SIGTERM, &sig, 0);
             #endif
             printf("Parent: [%i], Child: [%i] created\n", getppid(), getpid());
             sleep(10);  //waiting before the process termination
@@ -67,7 +67,7 @@ int main()
 	    kill(0, SIGTERM);   //terminating all the created processes
         exit(1);
         }
-	break;
+	break;  
 }
 sleep(1);
 }
@@ -87,7 +87,7 @@ sleep(1);
         }
     printf("Finally, [%i] children has died\n", counter);
     #ifdef SIGNALOPT
-    sig.sa_handler = SIG_DFL;   //restoring all the default handlers for the signals
-    for(int i = 0; i<_NSIG; i++) sigaction(i, &sig, 0);
+        sig.sa_handler = SIG_DFL;   //restoring all the default handlers for the signals
+        for(int i = 0; i<_NSIG; i++) sigaction(i, &sig, 0);
     #endif
 }
