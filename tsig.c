@@ -32,7 +32,7 @@ int main()
     sig.sa_handler = SIG_IGN;   //ignoring all the signals in a for loop (NSIG is a integer number of created signals)
     for(int i = 0; i<NSIG; i++) sigaction(i, &sig, 0);
 
-    sig.sa_handler = SIG_DFL;   //restoring the default handler for ingnored signals (SIG_DFL is a signal default mode, it's used to bring the ignored signals to the deafult mode)
+    sig.sa_handler = SIG_DFL;   //restoring the default handler for ingnored signals (SIG_DFL is a signal default mode, it's used to restore default function to the signals)
     sigaction(SIGCHLD, &sig, 0);
 
     sig.sa_handler = KeyboardStop; //setting up the custom keyboard interupt that will react when Cntrl+C i pressed on the keyboard
