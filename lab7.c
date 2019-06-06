@@ -2,121 +2,88 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define N			5
+#define THINKING 	1 
+#define HUNGRY 		2
+#define EATING		3 
+#define FOOD_LIMIT	4
+#define DELAY		4
 
-#define N	5
-#define LEFT	( i + N - 1 ) % N
-#define RIGHT	( i + 1 ) % N
+#define LEFT		(id + N - 1) % N
+#define RIGHT		(id + 1) % N
 
-#define THINKING 0
-#define HUNGRY 1
-#define EATING 2
+pthread_mutex_t m;//internal mutex
+pthread_mutex_t s[N];//array of mutexes
+pthread_t p[N];
+int	state[N];
 
-#define NUM_MEALS 2
-#define THINKING_TIME 5
-#define EATING_TIME 5
-#define WAITING 5
-#define up     pthread_mutex_unlock
-#define down   pthread_mutex_lock
+void grab_forks(int id);
+void put_away_forks(int id);
+void test(int i);
+void *create_philosopher(int id);
 
-pthread_mutex_t	m; 		//initialized to 1
-int	state[N];	//initiated to THINKING's
-pthread_mutex_t	s[N];	//	initialized to 0's
-pthread_t philosophers[N];
+void unlock(pthread_mutex_t *m) { pthread_mutex_unlock(m); }
+void lock(pthread_mutex_t *m) { pthread_mutex_lock(m); }
 
-void test( int i )
+int main()
 {
-	if( state[i] == HUNGRY
-		&& state[LEFT] != EATING
-		&& state[RIGHT] != EATING )
+	pthread_mutex_init(&m, NULL);	//initialization of mutex m with no parameters
+	unlock(&m);	//as mutex is initally locekd, we unlock it
+	for (int i=0; i<N; i++) 
+	{ 
+		p[i] = THINKING;	//all th philosophers in the array are set to THINKING state
+		pthread_mutex_init(&s[i], NULL);	//all the mutexes are being locked
+		lock(&s[i]);
+	}
+	for (int i=0; i<N; i++)
+		pthread_create(&p[i], NULL, (void *)create_philosopher, (void *)i);	//the thread is created, and the operations on mutexes begin
+	
+	for (int i = 0 ; i < N ; i++)
+		pthread_join(p[i], NULL);	//after the end of operations, the thread is destroyed
+
+	for (int i = 0 ; i < N ; i++)
+		pthread_mutex_destroy(&s[i]);	//as well as mutexes
+}
+
+void grab_forks(int id)
+{
+	lock(&m);	//locking the internal mutex, because only one process should be going at once
+		state[id] = HUNGRY;	//changing the mutex state
+		test(id);	//the check for available eating  option
+	unlock(&m);	//unlocking the internal mutex
+	lock(&s[id]);	//locking the philosopher
+}
+
+void put_away_forks(int id)
+{
+	lock(&m);	//same as grab_forks
+		state[id] = THINKING;	//chnging the mutex state
+		test(LEFT);	//testing both left and right philosopher
+		test(RIGHT);
+	unlock(&m);	//unlocking the internal mutex
+}
+
+void test(int id)
+{
+	if(	state[id] == HUNGRY && state[LEFT] != EATING && state[RIGHT] != EATING) //checking the state of current philosopher, as well as its neighbours
 	{
-		state[i] = EATING;
-		up( &s[i] );
+		state[id] = EATING;	//if the check is true, then the state is changed, and the philosopher is unlocked and "starts to eat"
+		unlock(&s[id]);
 	}
 }
 
-void grab_forks( int i )
+void *create_philosopher(int id)
 {
-	down( &m );
-		state[i] = HUNGRY;
-		test( i );
-	up( &m );
-	down( &s[i] );
-}
-
-void put_away_forks( int i )
-{
-	down( &m );
-		state[i] = THINKING;
-		test( LEFT );
-		test( RIGHT );
-	up( &m );
-}
-
-
-void *philosopher(void *i)
-{
-    int id = (long) i;
-    printf("Philosopher [%d] comes to the table and waits.\n", id);
-    sleep(WAITING);
-    int counter=0;
-
-    while(1)
-    {
-        if (counter == NUM_MEALS)
-        {
-            printf("\nPhilosopher [%d]: has eatten all the meals and is full\n", id);
-            break;
-        }
-        counter++;
-
-        printf("\nPhilosopher [%d]: trying to grab [Fork:%d & Fork:%d] and is hungry\n", id, id, (id + 1) % N);
-
-        grab_forks(id);
-
-        printf("\nPhilosopher [%d]: grabbed [Fork:%d & Fork:%d] and is eating (%ds)\n", id, id, (id + 1) % N, EATING_TIME);
- 
-        sleep(EATING_TIME);
- 
-        printf("\nPhilosopher [%d]: trying to put away [Fork:%d & Fork:%d] and stopped eating\n", id, id, (id + 1) % N);
-
-        put_away_forks(id);
-
-        printf("\nPhilosopher [%d]: has put away [Fork:%d & Fork:%d] and is thinking (%ds)\n", id, id, (id + 1) % N, THINKING_TIME);
- 
-        sleep(THINKING_TIME);
-    }
-
-
-}
-
-int main ()
-{
-    int i;
-    pthread_mutex_init(&m, NULL);
-    for (i=0; i<N; ++i)
-    {
-        state[i]=THINKING;
-        pthread_mutex_init(&s[i], NULL);
-        down(&s[i]);
-        if(pthread_create(&philosophers[i], NULL, (void*)philosopher, (void*)(long)i) != 0)
-        {
-            printf("Error, cannot create a new philosopher\n");
-            return 1;
-        }
-    }
-    for (i=0; i<N; ++i)
-    {
-        pthread_join(philosophers[i], NULL);
-    }
-    pthread_mutex_destroy(&m);
-
-    for (i=0; i<N; ++i)
-    {
-        pthread_mutex_destroy(&s[i]);
-    }
-    printf("\nNo more dining Philosophers.\n"); //Printing a message that there are no more dining philosophers
-    
-    pthread_exit(NULL);
-    return 0;
-    
+	printf("Philosopher [%d] arrives to the table\n", id);
+	for(int i=0; i<FOOD_LIMIT; i++)	//amount of meals 
+	{
+		printf("Philosopher [%d] is thinking\n",id);
+		sleep(DELAY);	//thihnkning time
+		grab_forks(id);
+		printf("Philosopher [%d] is eating his meal\n",id);
+		sleep(DELAY);	// eating time
+		put_away_forks(id);
+		printf("Philosopher [%d] finishes his meal\n",id);
+	}
+	printf("Philosopher [%d] leaves the table\n", id);
 }
